@@ -54,7 +54,7 @@ class BaseAgent():
     def _decide_next_step(self, previous_result: str) -> str:
         decide_next_step_prompt = prompts.DECIDE_NEXT_STEP_TEMPLATE.format(
             previous_result = previous_result,
-            cur_state = self.state,
+            pre_state = self.pre_state,
             example = prompts.NEXT_STEP_EXAMPLE,
         )
         

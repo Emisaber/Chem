@@ -1,6 +1,8 @@
 # example collection
 
-NEXT_STEP_EXAMPLE = """"""
+NEXT_STEP_EXAMPLE = """
+
+"""
 
 ANALYSE_SCORE_EXAMPLE = """<低分样例>
 >>>>>>>>>>>>>>>>>>>>>>
