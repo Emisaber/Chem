@@ -90,13 +90,14 @@ DECIDE_NEXT_STEP_TEMPLATE = """# 角色 #
 
 >>>>>>>>>>>>>>>>>>>>>>
 # 状态转换规则 #
-1. 允许的下一步转换状态：Retrieve, WebSearch, Finish
-2. 状态说明
+1. 状态说明
     - Start: 对化工问题进行回答的开始状态
     - Retrieve: 从专家知识库中检索到化工问题的相关知识
     - WebSearch: 从互联网中搜索得到化工问题的相关知识
     - Lookup: 对检索(Retrieve)或者搜索(WebSearch)获得的信息中凝练知识
     - Finish: 结束状态转换，从现有的信息中产生回答
+2. 允许的下一步转换状态：Retrieve, WebSearch, Finish
+
 <<<<<<<<<<<<<<<<<<<<<<
 
 >>>>>>>>>>>>>>>>>>>>>>
