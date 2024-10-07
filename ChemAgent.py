@@ -15,7 +15,7 @@ import prompts
 #TODO LocalAgent
 #TODO prompts
 #TODO history or log and some utils and fix bugs
-
+#TODO divide into humanmessage and systemmessage
 
 class BaseAgent():
     def __init__(self, alpha: int = 0.5, state: str = "Start", vector_store: str = "langchain-chatchat") -> None:
@@ -81,7 +81,7 @@ class BaseAgent():
                 question = self.question,
                 example = prompts.ANALYSE_SCORE_EXAMPLE, 
                 accesibility_weight = self.accesibility_weight,
-                complexity = self.complexity_weight,
+                complexity_weight = self.complexity_weight,
             )
         
         else:
