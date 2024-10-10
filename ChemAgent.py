@@ -264,9 +264,11 @@ class OpenAIAgent(BaseAgent):
     
     def _set_llm(self):
         llm = ChatOpenAI(
-            model = self.model,
+            model = "gpt-4o",
             temperature = 0.5,
             max_retries = 3,
+            base_url = OPENAI_BASE_URL_PROXY,
+            api_key = OPENAI_API_KEY,
         )
         
         self.llm = llm
