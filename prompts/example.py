@@ -1,6 +1,61 @@
 # example collection
+#TODO 下一步提示词，从Lookup跳入的情况
+NEXT_STEP_EXAMPLE = """<Retrieve>
+上一步状态为 Start
+分析：
+上一步状态为Start，应用状态转换规则 3 
+当前结果中的分数为 9
+9 大于 6
+系统的下一步状态应该是 Retrieve
 
-NEXT_STEP_EXAMPLE = """
+下一步状态：Retrieve
+</Retrieve>
+
+
+<WebSearch>
+上一步状态为 Start
+分析：
+上一步状态为Start，应用状态转换规则 3 
+当前结果中的分数为 5
+5 大于 3 且 5 小于 6
+系统的下一步状态应该是 WebSearch
+
+下一步状态：WebSearch
+</WebSearch>
+
+
+<Finish>
+上一步状态为 Start
+分析：
+上一步状态为Start，应用状态转换规则 3 
+当前结果中的分数为 1
+1 小于 3
+系统的下一步状态应该是 Finish
+
+下一步状态：Finish
+</Finish>
+
+<Retrieve>
+上一步状态为 Lookup
+分析：
+上一步状态为Lookup，并不是Start，应用状态转换规则 4 
+化工问题为 改性聚丙烯树脂的制备方法
+
+
+下一步状态：Retrieve
+
+</Retrieve>
+
+<WebSearch>
+
+</WebSearch>
+
+
+<Finish>
+
+</Finish>
+
+
 
 """
 
@@ -67,8 +122,7 @@ ANALYSE_SCORE_EXAMPLE = """<低分样例>
 
 """
 
-ANALYSE_FINISH_EXAMPLE = """"""
-
+#TODO 回答的样例
 ANSWER_EXAMPLE = """
 问题: 乙烯是什么
 回答: 乙烯（Ethylene）是一种简单的烃类化合物，化学式为 C₂H₄。它是最简单的烯烃（一种含有碳碳双键的化合物），也是一种无色、略带甜味的可燃气体。乙烯在化学工业中非常重要，主要作为合成塑料（如聚乙烯）的原料，同时也是植物激素之一，能够调节植物的生长、成熟和衰老。

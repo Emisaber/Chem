@@ -32,9 +32,10 @@ class BaseAgent():
         self._reset()
     
     def _reset(self):
-        self.pre_state = "Start"
+        self.pre_state = list()
         self.answer = None
         self.Intermediate_results = list()
+        self.problem_score = 0
         #TODO RAG API if there is a interface to obtain content else RAG from scratch
         
         self.history_list = list()
@@ -54,7 +55,7 @@ class BaseAgent():
     def _decide_next_step(self, previous_result: str) -> str:
         decide_next_step_prompt = prompts.DECIDE_NEXT_STEP_TEMPLATE.format(
             previous_result = previous_result,
-            pre_state = self.pre_state,
+            pre_state = ','.join(self.pre_state),
             example = prompts.NEXT_STEP_EXAMPLE,
         )
         
@@ -74,7 +75,7 @@ class BaseAgent():
         Returns:
             str: next step decision, analysis included 
         """
-        self.pre_state = self.state
+        self.pre_state.append(self.state)
         self.state = "Analyse"
         if(pre_result == None):
             analyse_prompt = prompts.ANALYSE_SCORE_TEMPLATE.format(
@@ -87,8 +88,7 @@ class BaseAgent():
         else:
             analyse_prompt = prompts.ANALYSE_FINISH_TEMPLATE.format(
                 question = self.question,
-                example = prompts.ANALYSE_FINISH_EXAMPLE, 
-                pre_result = pre_result,
+                pre_result = '\n'.join(pre_result),
             )
         
         
@@ -107,7 +107,7 @@ class BaseAgent():
             List[str]: List of knowledge
         """
         
-        self.pre_state = self.state
+        self.pre_state.append(self.state)
         self.state = "Retrieve"
         
         def rewrite_query(question: str):
@@ -135,7 +135,7 @@ class BaseAgent():
             List[str]: List of results
         """
         
-        self.pre_state = self.state
+        self.pre_state.append(self.state)
         self.state = "WebSearch"
         
         def rewrite_search(question: str):
@@ -163,11 +163,11 @@ class BaseAgent():
             str: Useful knowledge
         """
         
-        self.pre_state = self.state
+        self.pre_state.append(self.state)
         self.state = "Lookup"
         
         lookup_prompt = prompts.LOOKUP_TEMPLATE.format(
-            pre_result = pre_result,
+            pre_result = '\n'.join(pre_result),
             question = self.question,
             
         )
@@ -192,16 +192,8 @@ class BaseAgent():
                 
             elif self.state == "Analyse":
                 next_step = self._decide_next_step(self.Intermediate_results[-1])
-                if next_step == "Retrieve":
-                    self.Intermediate_results += self._Retrieve()
-                elif next_step == "WebSearch":
-                    self.Intermediate_results += self._Websearch()
-                elif next_step == "Finish":
-                    break
-                else:
-                    print("-"*10, "😨Analyse produce invalid step😨", "-"*10)
-                    raise Exception
-                    
+                self.state = next_step
+            
             elif self.state == "Retrieve":
                 self.Intermediate_results[-1] = (self._Lookup(self.Intermediate_results[-1]))
             
@@ -211,7 +203,12 @@ class BaseAgent():
             elif self.state == "Lookup":
                 self.Intermediate_results.append(self._Analyse())
             
+            elif self.state == "Finish":
+                break
             
+            else:
+                print("-"*10, "😨Analyse produce invalid step😨", "-"*10)
+                raise Exception
                 
         if self.state == "Finish" or (num_of_step >= max_steps):
             self.state = "Finish"
@@ -223,7 +220,7 @@ class BaseAgent():
     def print_cur_state(self):
         print("==\nState info", "="*28, "\n")
         print("-"*10, f"🗣current state is {self.state}", "-"*10, "\n")
-        print("-"*10, f"🗣previous state is {self.pre_state}", "-"*10, "\n")
+        print("-"*10, f"🗣previous state is {','.join(self.pre_state)}", "-"*10, "\n")
 
     def print_intermedia_results(self):
         #TODO format may needed
