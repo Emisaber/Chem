@@ -113,6 +113,7 @@ class BaseAgent():
         def rewrite_query(question: str):
             rewrite_query_prompt = prompts.REWRIE_QUERY_TEMPLATE.format(
                 query = question,
+                example = prompts.REWRITE_QUERY_EXAMPLE,
             )
             
             rewritten_query = self._call(rewrite_query_prompt)
@@ -141,13 +142,14 @@ class BaseAgent():
         def rewrite_search(question: str):
             rewrite_search_prompt = prompts.REWRITE_SEARCH_TEMPLATE.format(
                 question = question,
+                example = prompts.REWRITE_SEARCH_EXAMPLE,
             )
             
             rewritten_search = self._call(rewrite_search_prompt)
             
             return rewritten_search
         
-        search = rewrite_search
+        search = rewrite_search(question=self.question)
         search_result = self.Webwrapper.results(search, num_of_search)
         #TODO Format maybe required
         return search_result
