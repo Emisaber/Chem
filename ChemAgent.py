@@ -36,7 +36,7 @@ class BaseAgent():
         self.answer = None
         self.Intermediate_results = list()
         self.problem_score = 0
-        #TODO RAG API if there is a interface to obtain content else RAG from scratch
+        #TODO RAG API if there is an interface to obtain content else RAG from scratch
         
         self.history_list = list()
     
@@ -52,9 +52,9 @@ class BaseAgent():
         """
         raise NotImplementedError
 
-    def _decide_next_step(self, previous_result: str) -> str:
+    def _decide_next_step(self, pre_result: str) -> str:
         decide_next_step_prompt = prompts.DECIDE_NEXT_STEP_TEMPLATE.format(
-            previous_result = previous_result,
+            previous_result = pre_result,
             pre_state = ','.join(self.pre_state),
             example = prompts.NEXT_STEP_EXAMPLE,
         )
@@ -77,7 +77,7 @@ class BaseAgent():
         """
         self.pre_state.append(self.state)
         self.state = "Analyse"
-        if(pre_result == None):
+        if(self.pre_state == "Start"):
             analyse_prompt = prompts.ANALYSE_SCORE_TEMPLATE.format(
                 question = self.question,
                 example = prompts.ANALYSE_SCORE_EXAMPLE, 
@@ -177,7 +177,7 @@ class BaseAgent():
     
     
     @abstractmethod
-    def _answer(self, intermediate_result: List[str]) -> str:
+    def _answer(self, pre_results: List[str]) -> str:
         raise NotImplementedError
 
     @retry(tries=3)
@@ -192,7 +192,15 @@ class BaseAgent():
                 
             elif self.state == "Analyse":
                 next_step = self._decide_next_step(self.Intermediate_results[-1])
-                self.state = next_step
+                if next_step == "Retrieve":
+                    self.Intermediate_results.append(self._Retrieve())
+                elif next_step == "WebSearch":
+                    self.Intermediate_results.append(self._Websearch())
+                elif next_step == "Finish":
+                    break
+                else:
+                    print("-"*10, "😨Analyse produce invalid step😨", "-"*10)
+                    raise Exception 
             
             elif self.state == "Retrieve":
                 self.Intermediate_results[-1] = (self._Lookup(self.Intermediate_results[-1]))
@@ -201,14 +209,8 @@ class BaseAgent():
                 self.Intermediate_results[-1] = (self._Lookup(self.Intermediate_results[-1]))
                 
             elif self.state == "Lookup":
-                self.Intermediate_results.append(self._Analyse())
+                self.Intermediate_results.append(self._Analyse(self.Intermediate_results))
             
-            elif self.state == "Finish":
-                break
-            
-            else:
-                print("-"*10, "😨Analyse produce invalid step😨", "-"*10)
-                raise Exception
                 
         if self.state == "Finish" or (num_of_step >= max_steps):
             self.state = "Finish"
@@ -278,13 +280,13 @@ class OpenAIAgent(BaseAgent):
         
         return response
     
-    def _answer(self, intermediate_result: List[str]) -> str:
+    def _answer(self, pre_results: List[str]) -> str:
         # def answer_parser(answer: str):
         #     pass
         #TODO format maybe required
         answer_prompt = prompts.ANSWER_TEMPLATE.format(
             question = self.question,
-            intermediate_result = intermediate_result,
+            pre_results = '\n'.join(pre_results),
         )
         
         answer = self._call(answer_prompt)
