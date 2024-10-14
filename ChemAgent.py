@@ -1,33 +1,35 @@
 import time
+import re
 from abc import abstractmethod
 from collections import Counter
 from typing import Tuple, List, Optional
 from retry import retry
-from config import OPENAI_API_KEY, OPENAI_BASE_URL_PROXY
+from config import OPENAI_API_KEY, OPENAI_BASE_URL_PROXY, BING_SUBSCRIPTION_KEY
 
 from langchain_openai import ChatOpenAI
 from langchain.utilities import BingSearchAPIWrapper
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import HumanMessagePromptTemplate
+from langchain_core.prompts import ChatPromptTemplate
 import utils
 import prompts
 
 #TODO LocalAgent
-#TODO prompts
 #TODO history or log and some utils and fix bugs
-#TODO divide into humanmessage and systemmessage
+#TODO 改一下analyze
+#TODO 搜索检索结果得拆成列表才行
 
 class BaseAgent():
-    def __init__(self, alpha: int = 0.5, state: str = "Start", vector_store: str = "langchain-chatchat") -> None:
+    def __init__(self, alpha: int = 0.5, state: str = "Start", vector_store: str = "langchain-chatchat", num_of_search: int = 3) -> None:
         # Basic config
         self.question = None
         self.state_list = ["Start", "Analyse", "Retrieve", "WebSearch", "Lookup", "Finish"]
         self.state = state
-        self.Webwrapper = BingSearchAPIWrapper()
+        self.Webwrapper = BingSearchAPIWrapper(bing_subscription_key=BING_SUBSCRIPTION_KEY, k=num_of_search)
         self.vector_store = vector_store
         # hyper parameter config
         self.complexity_weight = alpha
-        self.accesibility_weight = 1 - alpha
+        self.accessibility_weight = 1 - alpha
         
         self._reset()
     
@@ -54,9 +56,10 @@ class BaseAgent():
 
     def _decide_next_step(self, pre_result: str) -> str:
         decide_next_step_prompt = prompts.DECIDE_NEXT_STEP_TEMPLATE.format(
-            previous_result = pre_result,
-            pre_state = ','.join(self.pre_state),
+            pre_results = pre_result,
+            pre_state = self.pre_state[-1],
             example = prompts.NEXT_STEP_EXAMPLE,
+            question = self.question,
         )
         
         response = self._call(decide_next_step_prompt)
@@ -77,11 +80,11 @@ class BaseAgent():
         """
         self.pre_state.append(self.state)
         self.state = "Analyse"
-        if(self.pre_state == "Start"):
+        if self.pre_state[-1] == "Start":
             analyse_prompt = prompts.ANALYSE_SCORE_TEMPLATE.format(
                 question = self.question,
                 example = prompts.ANALYSE_SCORE_EXAMPLE, 
-                accesibility_weight = self.accesibility_weight,
+                accessibility_weight = self.accessibility_weight,
                 complexity_weight = self.complexity_weight,
             )
         
@@ -125,7 +128,7 @@ class BaseAgent():
         #TODO Format maybe required
         return retrieve_result
     
-    def _Websearch(self, num_of_search: int = 3) -> List[str]:
+    def _Websearch(self) -> List[str]:
         """
         Search through Internet and return corresponding results
 
@@ -150,7 +153,7 @@ class BaseAgent():
             return rewritten_search
         
         search = rewrite_search(question=self.question)
-        search_result = self.Webwrapper.results(search, num_of_search)
+        search_result = self.Webwrapper.run(search)
         #TODO Format maybe required
         return search_result
 
@@ -171,7 +174,6 @@ class BaseAgent():
         lookup_prompt = prompts.LOOKUP_TEMPLATE.format(
             pre_result = '\n'.join(pre_result),
             question = self.question,
-            
         )
         
         response = self._call(lookup_prompt)
@@ -199,9 +201,10 @@ class BaseAgent():
                 elif next_step == "WebSearch":
                     self.Intermediate_results.append(self._Websearch())
                 elif next_step == "Finish":
+                    self.state = "Finish"
                     break
                 else:
-                    print("-"*10, "😨Analyse produce invalid step😨", "-"*10)
+                    print("-"*10, "😨 Analyse produce invalid step😨", "-"*10)
                     raise Exception 
             
             elif self.state == "Retrieve":
@@ -217,22 +220,23 @@ class BaseAgent():
         if self.state == "Finish" or (num_of_step >= max_steps):
             self.state = "Finish"
             self.answer = self._answer(self.Intermediate_results)
+            print(self.answer)
             return self.answer
     
     # Utils & property 
 
     def print_cur_state(self):
         print("==\nState info", "="*28, "\n")
-        print("-"*10, f"🗣current state is {self.state}", "-"*10, "\n")
-        print("-"*10, f"🗣previous state is {','.join(self.pre_state)}", "-"*10, "\n")
+        print("-"*20, f"🗣 current state is {self.state}", "-"*20, "\n")
+        print("-"*20, f"🗣 previous state is {', '.join(self.pre_state)}", "-"*20, "\n")
 
     def print_intermedia_results(self):
         #TODO format may needed
-        print("\nIntermedia results info", "="*30, "\n")
-        print("-"*10, f"😑Intermedia results are {self.Intermediate_results}", "-"*10, "\n")
+        print("\nIntermedia results info", "="*50, "\n")
+        print("-"*20, f"😑 Intermedia results are ", "-"*20, f"\n{self.Intermediate_results}\n")
     
     def print_basic_info(self):
-        print("\nBasic info", "="*30, "\n")
+        print("\nBasic info", "="*60, "\n")
         self.print_cur_state()
         self.print_intermedia_results()
         print("\nEnd", "="*37, "\n\n")
@@ -240,7 +244,14 @@ class BaseAgent():
     
     def _abstract_step_from_response(self, response: str):
         #TODO abstract step using re, implemented after prompts
-        pass
+        next_step = None
+        for line in response.splitlines():
+            if "下一步状态：" in line:
+                next_step = line.split("：", 1)[1].strip()
+                
+        return next_step
+        
+        
     
     def access_knowledge_base(self, query: str, num_of_example: int = 1, threshold: float = 0.5) -> List[str]:
         if self.vector_store == "langchain-chatchat":
@@ -265,7 +276,7 @@ class OpenAIAgent(BaseAgent):
     
     def _set_llm(self):
         llm = ChatOpenAI(
-            model = "gpt-4o",
+            model = self.model,
             temperature = 0.5,
             max_retries = 3,
             base_url = OPENAI_BASE_URL_PROXY,
@@ -276,10 +287,11 @@ class OpenAIAgent(BaseAgent):
               
     def _call(self, input: str) -> str:
         
-        prompt = HumanMessagePromptTemplate.from_template("{prompt}")
-        chain = prompt | self.llm | StrOutputParser
+        #prompt = HumanMessagePromptTemplate.from_template("{prompt}")
+        prompt = ChatPromptTemplate.from_template("{prompt}")
+        chain = prompt | self.llm | StrOutputParser()
         response = chain.invoke({"prompt": input})
-        
+        print(response)
         return response
     
     def _answer(self, pre_results: List[str]) -> str:

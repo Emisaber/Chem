@@ -1,3 +1,7 @@
-import prompts
-decide_next_step_prompt = prompts.DECIDE_NEXT_STEP_PROMPT
-print(decide_next_step_prompt)
+from ChemAgent import OpenAIAgent
+
+chat = OpenAIAgent()
+
+chat.run("你好")
+# chat._Analyse("嗐")
+# chat._decide_next_step("4分")

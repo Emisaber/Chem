@@ -1,5 +1,6 @@
 import requests
 import json
+from config import KB_URL
 
 def kb_chat(
     query: str, 
@@ -9,7 +10,7 @@ def kb_chat(
     prompt_name: str = 'default', 
     return_direct: str = True) -> str:
     
-    url = 'http://127.0.0.1:7861/chat/kb_chat'
+    url = KB_URL
     body = {
         "query": query,
         "mode": "local_kb",
@@ -32,7 +33,7 @@ def kb_chat(
     resp_json = json.loads(resp_str)
     # print(resp_json)
     
-    return resp_json['choices'][0]['message']['content']
+    return resp_json['docs'][0]
 
 
 #TODO 增加添加/删除文件的接口

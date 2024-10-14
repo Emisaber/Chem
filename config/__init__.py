@@ -1,1 +1,2 @@
 from .LLM_config import OPENAI_API_KEY, OPENAI_BASE_URL_PROXY
+from .API_config import KB_URL, BING_SUBSCRIPTION_KEY
