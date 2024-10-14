@@ -1,7 +1,7 @@
 # role or task template
 
 # 输入问题，输出分数，不需要严格的格式化输出
-ANALYSE_SCORE_TEMPLATE = """# 角色 #
+ANALYZE_SCORE_TEMPLATE = """# 角色 #
 你是一个化工问题难度的打分器，你擅长根据化工问题的**复杂程度(complexity)**和其**资料的可访问性(accessibility)**对其进行打分。
 >>>>>>>>>>>>>>>>>>>>>>
 # 定义 #
@@ -42,7 +42,7 @@ ANALYSE_SCORE_TEMPLATE = """# 角色 #
 """
 
 # 输入问题和现在的结果，输出是否结束的分析，不需要格式化输出
-ANALYSE_FINISH_TEMPLATE = """# 角色 #
+ANALYZE_FINISH_TEMPLATE = """# 角色 #
 你是一个问答系统中的分析者
 >>>>>>>>>>>>>>>>>>>>>>
 # 任务 #

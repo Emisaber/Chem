@@ -23,7 +23,7 @@ class BaseAgent():
     def __init__(self, alpha: int = 0.5, state: str = "Start", vector_store: str = "langchain-chatchat", num_of_search: int = 3) -> None:
         # Basic config
         self.question = None
-        self.state_list = ["Start", "Analyse", "Retrieve", "WebSearch", "Lookup", "Finish"]
+        self.state_list = ["Start", "Analyze", "Retrieve", "WebSearch", "Lookup", "Finish"]
         self.state = state
         self.Webwrapper = BingSearchAPIWrapper(bing_subscription_key=BING_SUBSCRIPTION_KEY, k=num_of_search)
         self.vector_store = vector_store
@@ -67,9 +67,9 @@ class BaseAgent():
         
         return next_step
         
-    def _Analyse(self, pre_result: Optional[List[str]] = None) -> str:
+    def _Analyze(self, pre_result: Optional[List[str]] = None) -> str:
         """
-        Analyse the situation and decide what to do. Options include Retrieve, Web and Finish
+        Analyze the situation and decide what to do. Options include Retrieve, Web and Finish
 
         Args:
             pre_result (Optional[List[str]], optional): obtained result so far, 
@@ -79,23 +79,23 @@ class BaseAgent():
             str: next step decision, analysis included 
         """
         self.pre_state.append(self.state)
-        self.state = "Analyse"
+        self.state = "Analyze"
         if self.pre_state[-1] == "Start":
-            analyse_prompt = prompts.ANALYSE_SCORE_TEMPLATE.format(
+            analyze_prompt = prompts.ANALYZE_SCORE_TEMPLATE.format(
                 question = self.question,
-                example = prompts.ANALYSE_SCORE_EXAMPLE, 
+                example = prompts.ANALYZE_SCORE_EXAMPLE, 
                 accessibility_weight = self.accessibility_weight,
                 complexity_weight = self.complexity_weight,
             )
         
         else:
-            analyse_prompt = prompts.ANALYSE_FINISH_TEMPLATE.format(
+            analyze_prompt = prompts.ANALYZE_FINISH_TEMPLATE.format(
                 question = self.question,
                 pre_result = '\n'.join(pre_result),
             )
         
         
-        response = self._call(analyse_prompt)
+        response = self._call(analyze_prompt)
         
         return response
 
@@ -192,9 +192,9 @@ class BaseAgent():
             
             self.print_basic_info()
             if self.state == "Start":
-                self.Intermediate_results.append(self._Analyse())
+                self.Intermediate_results.append(self._Analyze())
                 
-            elif self.state == "Analyse":
+            elif self.state == "Analyze":
                 next_step = self._decide_next_step(self.Intermediate_results[-1])
                 if next_step == "Retrieve":
                     self.Intermediate_results.append(self._Retrieve())
@@ -204,7 +204,7 @@ class BaseAgent():
                     self.state = "Finish"
                     break
                 else:
-                    print("-"*10, "😨 Analyse produce invalid step😨", "-"*10)
+                    print("-"*10, "😨 Analyze produce invalid step😨", "-"*10)
                     raise Exception 
             
             elif self.state == "Retrieve":
@@ -214,7 +214,7 @@ class BaseAgent():
                 self.Intermediate_results[-1] = (self._Lookup(self.Intermediate_results[-1]))
                 
             elif self.state == "Lookup":
-                self.Intermediate_results.append(self._Analyse(self.Intermediate_results))
+                self.Intermediate_results.append(self._Analyze(self.Intermediate_results))
             
                 
         if self.state == "Finish" or (num_of_step >= max_steps):

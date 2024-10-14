@@ -92,7 +92,7 @@ NEXT_STEP_EXAMPLE = """<Retrieve>
 
 """
 
-ANALYSE_SCORE_EXAMPLE = """<低分样例>
+ANALYZE_SCORE_EXAMPLE = """<低分样例>
 >>>>>>>>>>>>>>>>>>>>>>
 # 化工问题 #
 问题: 乙烯是什么
