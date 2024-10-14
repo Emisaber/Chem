@@ -187,9 +187,10 @@ class BaseAgent():
     @retry(tries=3)
     def run(self, question: str, max_steps: int = 7):
         self.question = question
-        
-        for num_of_step in range(max_steps):
+        num_of_step = 0
+        while num_of_step < max_steps:
             
+            num_of_step += 1
             self.print_basic_info()
             if self.state == "Start":
                 self.Intermediate_results.append(self._Analyze())
@@ -291,6 +292,7 @@ class OpenAIAgent(BaseAgent):
         prompt = ChatPromptTemplate.from_template("{prompt}")
         chain = prompt | self.llm | StrOutputParser()
         response = chain.invoke({"prompt": input})
+        # response = chain.ainvoke({"prompt": input})
         print(response)
         return response
     
