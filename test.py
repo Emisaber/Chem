@@ -12,24 +12,11 @@ def setuserN():
     data = json.loads(request.get_data())
     inputt = data["userinfo"]
     chat = OpenAIAgent()
-    # result = "abababa"
-    # chat.run("你好")
-    # chat._Analyze("嗐")
-    # chat._decide_next_step("4分")
+    print("this is input: ", inputt, end='\n')
     result = chat.run(inputt)
 
-    # result = "ababa"
     print("this is result", result)
     return jsonify({"botanswer": result, "step": 1, "message": "true"})
 
 if __name__ == "__main__":
     app.run()
-
-    
-    
-
-
-# chat = OpenAIAgent()
-# chat.run("你好")
-# chat._Analyze("嗐")
-# chat._decide_next_step("4分")
