@@ -7,7 +7,8 @@
 ![FSM](./asset/FSM.svg)
 
 ### 待办
-
+- [x] Reason
+- [x] Knowledge
 - [ ] Training
 - [ ] Web UI
 - [ ] history
