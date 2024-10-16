@@ -1,2 +1,2 @@
-OPENAI_API_KEY = "sk-lTfqAmVUOdjslAYp569b22A7D728428081320c579cE765A6"
-OPENAI_BASE_URL_PROXY = "https://gptgod.cloud/v1/"
+OPENAI_API_KEY = "your openai key here"
+OPENAI_BASE_URL_PROXY = "proxy if needed"
